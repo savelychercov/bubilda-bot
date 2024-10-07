@@ -19,6 +19,7 @@ openai_apikey = os.getenv("OPENAI_TOKEN")
 pexels_apikey = os.getenv("PEXELS_TOKEN")
 tenor_apikey = os.getenv("TENOR_TOKEN")
 telegram_apikey = os.getenv("TELEGRAM_TOKEN")
+telegram_user_id = os.getenv("TELEGRAM_USER_ID")
 
 main_emoji = ":zipper_mouth:"
 

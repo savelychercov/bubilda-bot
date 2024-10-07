@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from library import gpt
-import traceback
 from library import logger
 import openai
 import config
@@ -91,16 +90,18 @@ class GPTCog(commands.Cog):
 
             try:
                 async with message.channel.typing():
-                    last_messages = await gpt.get_last_messages(self.bot, message.channel, message, preferences.context_window)
+                    last_messages = await gpt.get_last_messages(self.bot, message.channel, message,
+                                                                preferences.context_window)
                     messages_context = gpt.get_full_context_window(preferences.tune_string, last_messages, message)
                     answer_text, gif_url, embed = gpt.gen_answer_universal(messages_context)
                     if not any((answer_text, gif_url, embed)):
                         answer_text = "Я не смог ничего придумать"
 
             except openai.PermissionDeniedError:
+                print("Permission denied because your country is banned from OpenAI, try other country")
                 answer_text = "Меня забанили в GPT сорри"
-            except openai.BadRequestError:
-                logger.log(f"Bad request: {message.content}")
+            except openai.BadRequestError as e:
+                logger.err(e, f"Bad request: {message.content}")
                 answer_text = "Я не смог ничего придумать из за ошибки"
             except Exception as e:
                 logger.err(e, "Unexpected exception")
@@ -114,7 +115,8 @@ class GPTCog(commands.Cog):
                                 embed = eval(texts[0])
                                 await message.channel.send(embed=embed)
                                 return
-                            except: pass
+                            except:
+                                pass
                         await message.channel.send(texts[0], embed=embed)
                     else:
                         if embed: await message.channel.send(embed=embed)
@@ -125,7 +127,7 @@ class GPTCog(commands.Cog):
 
             await message.channel.send(answer_text)
 
-    @commands.command(brief="Вывести последние сообщения (dev)")
+    """@commands.command(brief="Вывести последние сообщения (dev)")
     async def lastmessages(self, ctx: commands.Context):
         preferences = get_settings(ctx.guild.id)
         last_messages = await gpt.get_last_messages(self.bot, ctx.channel, ctx.message, preferences.context_window)
@@ -134,9 +136,9 @@ class GPTCog(commands.Cog):
         with open("last_messages.txt", "w", encoding="utf-8") as f:
             for message in messages_strs:
                 f.write(message + "\n")
-        await ctx.send(file=discord.File("last_messages.txt"))
+        await ctx.send(file=discord.File("last_messages.txt"))"""
 
-    @commands.command(brief="Ответ от GPT", aliases=["gpt", "ans"])
+    """@commands.command(brief="Ответ от GPT", aliases=["gpt", "ans"])
     async def answer(self, ctx: commands.Context, *, arg=None):
         if arg is None:
             await ctx.send("Попробуйте: answer <текст>")
@@ -151,7 +153,7 @@ class GPTCog(commands.Cog):
                 logger.log(f"Unexpected exception:\n{traceback.format_exc()}")
                 answer_text = "UnexpectedError"
 
-            await ctx.send(content=answer_text)
+            await ctx.send(content=answer_text)"""
 
     @commands.group(brief="Настройки GPT (dev)", invoke_without_command=True, aliases=["gpts"])
     async def gptsettings(self, ctx: commands.Context):
@@ -273,22 +275,26 @@ class GPTCog(commands.Cog):
         db.set_obj("", ctx.guild.id, prefs)
         await ctx.send(f"{user.display_name} разбанен")
 
-    @commands.command(brief="Получить ссылку на картинку из сообщения (dev)")
+    """@commands.command(brief="Получить ссылку на картинку из сообщения (dev)")
     async def imageurl(self, ctx: commands.Context):
         text = "Вот ссылки на прикрепленные картинки:\n"
         urls = [attachment.url for attachment in ctx.message.attachments if
                 attachment.content_type.startswith('image/')]
-        await ctx.send(text + "\n".join(urls))
+        await ctx.send(text + "\n".join(urls))"""
 
-    @commands.command(brief="Получить ответ на запрос с картинками")
+    """@commands.command(brief="Получить ответ на запрос с картинками")
     async def look(self, ctx: commands.Context):
         image_urls = [attachment.url for attachment in ctx.message.attachments if
                       attachment.content_type.startswith('image/')]
         if not image_urls:
             await ctx.send("Нужно прикрепить картинки")
             return
-        await ctx.send(gpt.gen_answer_from_image(ctx.author.name, ctx.message.content, image_urls))
+        await ctx.send(gpt.gen_answer_from_image(ctx.author.name, ctx.message.content, image_urls))"""
 
 
 async def setup(bot):
-    await bot.add_cog(GPTCog(bot))
+    if config.openai_apikey is None:
+        print("Please set your OpenAI API key in .env file: OPENAI_APIKEY=<your key>")
+        print("If not set, GPT cog will not work")
+    else:
+        await bot.add_cog(GPTCog(bot))

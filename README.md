@@ -25,10 +25,11 @@ To deploy this project run
 
 Add and open the .env file and add the following keys, replacing <your_value> with your actual tokens:
 ```text
-DISCORD_TOKEN=<your_value>   # Required!
-DEBUG_DISCORD_TOKEN=<your_value>
-OPENAI_TOKEN=<your_value>
-PEXELS_TOKEN=<your_value>
-TENOR_TOKEN=<your_value>
-TELEGRAM_TOKEN=<your_value>
+DISCORD_TOKEN=<your_value>   # Main discord api token. Required!
+DEBUG_DISCORD_TOKEN=<your_value>  # Token for debug bot for test server
+OPENAI_TOKEN=<your_value>  # Token for GPTCog, get from openai
+PEXELS_TOKEN=<your_value>  # Token for search images, get from pexels
+TENOR_TOKEN=<your_value>  # Token for search gifs, get from tenor
+TELEGRAM_TOKEN=<your_value>  # Token for send logs to Telegram
+TELEGRAM_USER_ID=<your_telegram_id>  # Your user id in Telegram
 ```

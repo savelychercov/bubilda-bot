@@ -8,7 +8,8 @@ from discord.ext import commands
 from library.graphics import SearchContent
 from library import logger
 
-client = openai.OpenAI(api_key=openai_apikey)
+if openai_apikey is not None:
+    client = openai.OpenAI(api_key=openai_apikey)
 regex_for_names = '^[a-zA-Z0-9_-]{1,64}$'
 regex_for_urls = r"(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})"
 model = "gpt-4o-mini"
@@ -97,7 +98,7 @@ def send_table(table_name: str, titles: list[str], rows: list[list[str]]):
     return text
 
 
-def gen_answer_from_messages(author_name: str, message: str, history: list[dict] = None, tune_strings: str | list = ""):
+"""def gen_answer_from_messages(author_name: str, message: str, history: list[dict] = None, tune_strings: str | list = ""):
     if not isinstance(tune_strings, str):
         tune_strings = ". ".join(tune_strings)
     if not history: history = []
@@ -107,10 +108,10 @@ def gen_answer_from_messages(author_name: str, message: str, history: list[dict]
         messages=[{"role": "system", "content": tune_strings}] + history + [
             {"role": "user", "name": author_name, "content": message}]
     )
-    return completion.choices[0].message.content
+    return completion.choices[0].message.content"""
 
 
-def gen_answer_from_image(author_name: str, prompt: str, image_urls: list[str]):
+"""def gen_answer_from_image(author_name: str, prompt: str, image_urls: list[str]):
     message = {
         "role": "user",
         "name": author_name,
@@ -128,7 +129,7 @@ def gen_answer_from_image(author_name: str, prompt: str, image_urls: list[str]):
         messages=[message],
         max_tokens=2000,
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content"""
 
 
 def gen_answer_universal(full_context: list[dict]):
@@ -248,13 +249,15 @@ def send_embed(title: str, desc: str = None, color_hex: str = "#ffffff"):
         return None
 
 
+"""
 def send_message_to_savely(text: str):
     try:
         print(text)
         logger.log(f"Message from BubildaGPT:\n{text}", markdown=False)
     except Exception as e:
         logger.err(e, "Ошибка отправки сообщения savelychercov")
-    """
+"""
+"""
         {
             "name": "send_message_to_savely",
             "description": "Sends a message to Savely",
@@ -269,7 +272,7 @@ def send_message_to_savely(text: str):
                 "required": ["message"]
             }
         }
-    """
+"""
 
 
 async def get_last_messages(
@@ -285,7 +288,7 @@ async def get_last_messages(
         if (msg == request_message
                 or msg.content.strip() == ""
                 or re.match(regex_for_urls, msg.content)):  # no content in message text
-            if msg.embeds and msg.author.bot:  # if has embeds
+            if msg.embeds and msg.author.bot:  # if message has embeds
                 content = ", ".join([refine_embed(emb) for emb in msg.embeds])
             elif [attachment.url for attachment in msg.attachments if attachment.content_type.startswith('image/')] \
                     and messages_count < image_remember_limit:  # if message has attachments and remember limit
@@ -321,10 +324,10 @@ def get_function_call(resp: openai.ChatCompletion) -> str:
 
 
 if __name__ == "__main__":
-    emb = discord.Embed(
+    test_embed = discord.Embed(
         title="Test title",
         description="Test desc",
         color=discord.Color.orange()
     )
-    print(refine_embed(emb))
-    print(eval(refine_embed(emb)))
+    print(refine_embed(test_embed))
+    print(eval(refine_embed(test_embed)))
