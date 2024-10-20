@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import os
 import config
 
 keys_key = config.keys_key
@@ -15,14 +15,13 @@ inventory_key = config.inventory_key
 files_path = "memoryV1/files/"
 
 
-def check_path():
-    import os
-    if not os.path.exists(files_path):
-        os.makedirs(files_path)
+def check_path(path_str: str):
+    if not os.path.exists(path_str):
+        os.makedirs(path_str)
 
 
 def read_all(filename: str):
-    check_path()
+    check_path(files_path)
     try:
         with open(files_path + filename + ".txt", "r", encoding="utf-8") as file:
             lines = {}
@@ -38,7 +37,7 @@ def read_all(filename: str):
 
 
 def read_key(filename: str, key: str):
-    check_path()
+    check_path(files_path)
     key = key.lower()
     try:
         with open(files_path + filename + ".txt", "r", encoding="utf-8") as file:
@@ -53,7 +52,7 @@ def read_key(filename: str, key: str):
 
 
 def delete_key(filename: str, key: str):
-    check_path()
+    check_path(files_path)
     key = key.lower()
     try:
         file = read_all(filename)
@@ -71,12 +70,12 @@ def delete_key(filename: str, key: str):
 
 
 def clear_keys(filename: str):
-    check_path()
+    check_path(files_path)
     open(files_path + filename + ".txt", "w+", encoding="utf-8").close()
 
 
 def new_key(filename: str, key: str, data: str):
-    check_path()
+    check_path(files_path)
     key, data = str(key.lower()), str(data)
     delete_key(filename, key)
 

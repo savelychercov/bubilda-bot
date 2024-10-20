@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from typing import Any
 import datetime
+import os
 
 
 files_path = "memoryV2/files/"
 
 
-def check_path():
-    import os
-    if not os.path.exists(files_path):
-        os.makedirs(files_path)
+def check_path(path_str: str):
+    if not os.path.exists(path_str):
+        os.makedirs(path_str)
 
 
 class DataBase:
@@ -19,12 +19,12 @@ class DataBase:
         self.slice_key = slice_key
 
     def clear_all_keys(self, filename: str | int):
-        check_path()
+        check_path(files_path)
         filename = str(filename)
         open(files_path + self.key + filename + ".txt", "w+", encoding="utf-8").close()
 
     def read_all_keys(self, filename: str | int):
-        check_path()
+        check_path(files_path)
         filename = str(filename)
         try:
             with open(files_path + self.key + filename + ".txt", "r", encoding="utf-8") as file:
@@ -40,7 +40,7 @@ class DataBase:
             return {}
 
     def set_all_keys(self, filename: str | int, keys: dict[str | int, str | int]):
-        check_path()
+        check_path(files_path)
         filename = str(filename)
 
         with open(files_path + self.key + filename + ".txt", "w+", encoding="utf-8") as file:

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from os import listdir
 
 T_COLOR = Literal['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple', 'magenta', 'orange', 'pink',
-    'purple', 'random', 'red', 'teal', 'yellow']
+                  'purple', 'random', 'red', 'teal', 'yellow']
 
 all_colors = ['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple', 'magenta', 'orange', 'pink',
               'purple', 'random', 'red', 'teal', 'yellow']
@@ -31,14 +31,15 @@ def loaded_extensions():
 def get_random_time(min_hours: int, max_hours: int):
     if max_hours == 0:
         hours = 0
-    elif min_hours+1-max_hours == 0:
+    elif min_hours + 1 - max_hours == 0:
         hours = min_hours
     else:
         hours = random.randint(min_hours, max_hours - 1)
 
     if config.random_minutes > 0:
         minutes = random.randint(0, config.random_minutes)
-    else: minutes = 0
+    else:
+        minutes = 0
 
     next_event_time = datetime.now() + timedelta(
         hours=hours,
@@ -80,7 +81,6 @@ class EventTimeClass:
 
 
 EventTime = EventTimeClass()
-
 
 if __name__ == "__main__":
     raise NotImplementedError("this file should not be run directly")

@@ -2,7 +2,8 @@ import discord
 import traceback
 from discord.ext import commands
 from config import admin_ids
-from memoryV1.files_db import BalanceData
+from memoryV1 import files_db
+from memoryV2 import DB
 import config
 from library.other_tools import loaded_extensions
 from library import logger
@@ -10,6 +11,68 @@ import sys
 import os
 import io
 import contextlib
+import json
+from datetime import datetime
+
+
+backups_path = "backups/"
+paths_to_backup = [files_db.files_path, DB.files_path]
+
+
+def get_backup_str(files: list[str]):
+    backup_json = {}
+    for name in files:
+        with open(name, "r", encoding="utf-8") as f:
+            backup_json[name] = f.read()
+    return backup_json
+
+
+def make_backup(backup_name: str):
+    if not os.path.exists(backups_path):
+        os.makedirs(backups_path)
+    filenames = []
+    for path in paths_to_backup:
+        files_db.check_path(path)
+        for filename in os.listdir(path):
+            filenames.append(path+filename)
+    with open(backups_path + backup_name + ".json", "w+", encoding="utf-8") as f:
+        json.dump(get_backup_str(filenames), f)
+    return backups_path + backup_name + ".json"
+
+
+def restore_backup(backup_name: str):
+    if not os.path.exists(backups_path) or backup_name not in get_backup_names():
+        raise FileNotFoundError
+    with open(backups_path + backup_name + ".json", "r", encoding="utf-8") as f:
+        backup_json = json.load(f)
+    files_db.check_path(files_db.files_path)
+    DB.check_path(DB.files_path)
+    for name in backup_json:
+        with open(name, "w+", encoding="utf-8") as f:
+            f.write(backup_json[name])
+
+
+def get_backup_names():
+    if not os.path.exists(backups_path):
+        return []
+    names = []
+    for filename in os.listdir(backups_path):
+        names.append(filename.replace(".json", ""))
+    return names
+
+
+def delete_backup(backup_name: str):
+    if not os.path.exists(backups_path) or backup_name not in get_backup_names():
+        raise FileNotFoundError
+    os.remove(backups_path + backup_name + ".json")
+
+
+def clear_data():
+    for path in paths_to_backup:
+        if not os.path.exists(path):
+            continue
+        for filename in os.listdir(path):
+            os.remove(path + filename)
 
 
 class ConfigConfirmButtons(discord.ui.View):
@@ -59,6 +122,91 @@ class DeveloperCog(commands.Cog):
         self.__cog_description__ = "Приколы управления когами бубылды"
         self.bot: commands.Bot = bot
 
+    @commands.group(brief="Показать бекапы (dev)", invoke_without_command=True)
+    async def backups(self, ctx: commands.Context):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+            return
+        backups = get_backup_names()
+        if len(backups) == 0:
+            await ctx.send("Нет бекапов")
+            return
+        embed = discord.Embed(
+            color=discord.Color.blurple(),
+            description="- "+"\n- ".join(backups),
+            title="**Бекапы**")
+        await ctx.send(embed=embed)
+
+    @backups.command(brief="Сделать бекап (dev)")
+    async def make(self, ctx: commands.Context, name: str = None):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        if name is None:
+            name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        if name in get_backup_names():
+            await ctx.send("Бекап с таким именем уже существует")
+            return
+        make_backup(name)
+        await ctx.send("Бекап создан")
+
+    @backups.command(brief="Восстановить бекап (dev)")
+    async def restore(self, ctx: commands.Context, name: str):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        try:
+            name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            make_backup(name)
+            await ctx.send(f"Бекап создан с именем {name}")
+            clear_data()
+            restore_backup(name)
+            await ctx.send(f"Бекап с именем {name} восстановлен")
+        except FileNotFoundError:
+            await ctx.send(f"Бекап с именем {name} не найден")
+            raise
+
+    @backups.command(brief="Удалить бекап (dev)")
+    async def delete(self, ctx: commands.Context, name: str):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        try:
+            delete_backup(name)
+        except FileNotFoundError:
+            await ctx.send(f"Бекап с именем {name} не найден")
+            return
+        await ctx.send(f"Бекап с именем {name} удален")
+
+    @backups.command(brief="Получить бекап (dev)")
+    async def send(self, ctx: commands.Context, name: str):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        if name not in get_backup_names():
+            await ctx.send(f"Бекап с именем {name} не найден")
+            return
+        await ctx.send(file=discord.File(backups_path + name + ".json"))
+
+    @backups.command(brief="Загрузить бекап (dev)", name="load")
+    async def load_backup_command(self, ctx: commands.Context):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        if not ctx.message.attachments:
+            await ctx.send("Прикрепите файл бекапа")
+            return
+        file = ctx.message.attachments[0]
+        if file.filename in get_backup_names():
+            await ctx.send("Бекап c таким именем уже существует")
+            return
+        await file.save(backups_path + file.filename)
+        await ctx.send(f"Бекап с именем {file.filename} загружен")
+
+    @backups.command(brief="Загрузить пустой бекап (dev)")
+    async def clear(self, ctx: commands.Context):
+        if ctx.author.id not in admin_ids:
+            await ctx.send("Низя")
+        name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        make_backup(name)
+        clear_data()
+        await ctx.send(f"Бекап с именем {name} создан, все данные очищены")
+
     @commands.command(brief="Изменить никнейм (dev)")
     async def changenick(self, ctx, member: discord.Member, *, nickname):
         if ctx.author.id in admin_ids:
@@ -89,7 +237,7 @@ class DeveloperCog(commands.Cog):
                 filename = str(ctx.guild.id)
                 user = str(user.id)
                 money = float(money)
-                BalanceData.set_balance(filename, user, money)
+                files_db.BalanceData.set_balance(filename, user, money)
             except:
                 await ctx.send("Чота нетак")
         else:
