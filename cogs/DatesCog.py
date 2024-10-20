@@ -1,7 +1,7 @@
 import discord
 from datetime import datetime
 from discord.ext import commands
-from memory.files import DatesData as d
+from memoryV1.files_db import DatesData as d
 
 
 class DatesCog(commands.Cog):

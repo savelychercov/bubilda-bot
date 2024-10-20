@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 import config
 from library.graphics import SearchContent
-from memory.files import BalanceData, CoinflipData
+from memoryV1.files_db import BalanceData, CoinflipData
 from library.logger import err
 
 coinflipmessages = {}

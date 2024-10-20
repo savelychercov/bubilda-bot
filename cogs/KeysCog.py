@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from memory.files import KeysData
+from memoryV1.files_db import KeysData
 from library import logger
 from library.graphics import SearchContent
 from library.gpt import *

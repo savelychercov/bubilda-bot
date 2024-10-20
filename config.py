@@ -85,7 +85,7 @@ coinflip_commission = 10
 coinflip_timeout_time = 60
 
 
-# Keys for memory files
+# Keys for memoryV1 files
 keys_key = "keys"
 marry_key = "marriages"
 balance_key = "balance"

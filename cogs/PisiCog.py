@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord import utils
-from memory.files import readall, read_key, PencilsData, new_key, delete_key, InventoryData, daily_key, pisi_key, ShopData
+from memoryV1.files_db import readall, read_key, PencilsData, new_key, delete_key, InventoryData, daily_key, pisi_key, ShopData
 import random
 import config
 import traceback
@@ -494,10 +494,10 @@ class PisiCog(commands.Cog):
             # mplcyberpunk.add_gradient_fill(alpha_gradientglow=0.35, gradient_start="bottom")
             mplcyberpunk.make_lines_glow()
 
-            plt.savefig('memory/lastpisigraph.png', bbox_inches='tight', dpi=200)
+            plt.savefig('memoryV1/lastpisigraph.png', bbox_inches='tight', dpi=200)
             plt.clf()
 
-            await ctx.send(file=discord.File('memory/lastpisigraph.png'))
+            await ctx.send(file=discord.File('memoryV1/lastpisigraph.png'))
         except Exception as e:
             logger.err(e, "Ошибка построения графика:\n")
             await ctx.send("Ошибочки <:funnycat:1051348714423328778>")
@@ -575,9 +575,9 @@ class PisiCog(commands.Cog):
 
             mplcyberpunk.add_glow_effects(gradient_fill=True)
 
-            plt.savefig('memory/lastpisigraph.png', bbox_inches='tight', dpi=200)
+            plt.savefig('memoryV1/lastpisigraph.png', bbox_inches='tight', dpi=200)
 
-            await ctx.send(file=discord.File('memory/lastpisigraph.png'))
+            await ctx.send(file=discord.File('memoryV1/lastpisigraph.png'))
         except:
             if logging: logger.log("Ошибка построения графика:\n" + str(traceback.format_exc()))
             await ctx.send("Ошибочки <:funnycat:1051348714423328778>")
@@ -633,7 +633,7 @@ class PisiCog(commands.Cog):
             await ctx.send("<:funnycat:1051348714423328778>")
             return
 
-        with open("memory/temppisilogtosend.txt", "w+", encoding="utf-8") as file:
+        with open("memoryV1/temppisilogtosend.txt", "w+", encoding="utf-8") as file:
             data = readall(f"{config.filekeys.pisi_key}log{guild}")
 
             if not data:
@@ -649,7 +649,7 @@ class PisiCog(commands.Cog):
                 file.write(f"total-val:{PencilsData.get_pisa(guild, user_id)}\n")
                 file.write("\n---------------\n\n")
 
-        await ctx.author.send(file=discord.File("memory/temppisilogtosend.txt"))
+        await ctx.author.send(file=discord.File("memoryV1/temppisilogtosend.txt"))
         await ctx.send("Лог отправлен босс")
 
     @commands.command(brief="Отправить ивенты (dev)")

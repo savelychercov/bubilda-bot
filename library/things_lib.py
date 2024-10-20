@@ -4,9 +4,9 @@ from typing import Callable
 import discord
 from discord.ext import commands
 from datetime import datetime
-from memory.files import InventoryData as inv
+from memoryV1.files_db import InventoryData as inv
 from library.graphics import SearchContent
-from memory.files import PencilsData
+from memoryV1.files_db import PencilsData
 import config
 import library.logger as logger
 import traceback

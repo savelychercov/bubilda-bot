@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import Interaction
-from memory.files import InventoryData as inv
+from memoryV1.files_db import InventoryData as inv
 from library.things_lib import Things
 from library import logger
 import config

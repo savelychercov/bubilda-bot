@@ -96,13 +96,13 @@ class WordCog(commands.Cog):
             wordcloud\
                 .WordCloud(width=800, height=800, collocations=False, background_color="#170c26", stopwords=stop_words) \
                 .generate(text) \
-                .to_file("memory/last_word_cloud.png")
+                .to_file("memoryV1/last_word_cloud.png")
         except ValueError:
             await send_message.edit(content="Не удалось создать облако слов")
             return
 
         await send_message.delete()
-        await ctx.send(file=discord.File("memory/last_word_cloud.png"))
+        await ctx.send(file=discord.File("memoryV1/last_word_cloud.png"))
 
     @cloud.command(brief="Задать определенный день", aliases=["day", "d"])
     async def days(self, ctx: commands.Context, start_day: str, stop_day: str = None, count: int = 5000):
@@ -171,7 +171,7 @@ class WordCog(commands.Cog):
             wordcloud\
                 .WordCloud(width=800, height=800, collocations=False, background_color="#170c26", stopwords=stop_words) \
                 .generate(text) \
-                .to_file("memory/last_word_cloud.png")
+                .to_file("memoryV1/last_word_cloud.png")
         except ValueError:
             await send_message.edit(content="Не удалось создать облако слов")
             return
@@ -181,7 +181,7 @@ class WordCog(commands.Cog):
             return
 
         await send_message.delete()
-        await ctx.send(file=discord.File("memory/last_word_cloud.png"))
+        await ctx.send(file=discord.File("memoryV1/last_word_cloud.png"))
 
     @cloud.command(brief="Облако по одному пользователю", aliases=["u"])
     async def user(self, ctx: commands.Context, user: discord.User = None, count: int = 5000):
@@ -231,13 +231,13 @@ class WordCog(commands.Cog):
             wordcloud\
                 .WordCloud(width=800, height=800, collocations=False, background_color="#170c26", stopwords=stop_words) \
                 .generate(text) \
-                .to_file("memory/last_word_cloud.png")
+                .to_file("memoryV1/last_word_cloud.png")
         except ValueError:
             await send_message.edit(content="Не удалось создать облако слов")
             return
 
         await send_message.delete()
-        await ctx.send(file=discord.File("memory/last_word_cloud.png"))
+        await ctx.send(file=discord.File("memoryV1/last_word_cloud.png"))
 
     @app_commands.command()
     @app_commands.rename(

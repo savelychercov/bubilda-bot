@@ -1,8 +1,8 @@
 import discord
 from discord import Interaction
 from discord.ext import commands
-from memory.files import InventoryData as inv
-from memory.files import BalanceData
+from memoryV1.files_db import InventoryData as inv
+from memoryV1.files_db import BalanceData
 from library.things_lib import Things
 from library.graphics import SearchContent
 from memoryV2 import DB

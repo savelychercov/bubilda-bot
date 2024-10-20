@@ -2,7 +2,7 @@ import discord
 import traceback
 from discord.ext import commands
 from config import admin_ids
-from memory.files import BalanceData
+from memoryV1.files_db import BalanceData
 import config
 from library.other_tools import loaded_extensions
 from library import logger

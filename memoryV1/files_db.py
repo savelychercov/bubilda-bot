@@ -13,9 +13,18 @@ shop_key = config.shop_key
 inventory_key = config.inventory_key
 
 
+files_path = "memoryV1/files/"
+
+
+def check_path():
+    import os
+    if not os.path.exists(files_path):
+        os.makedirs(files_path)
+
+
 def readall(filename: str):
     try:
-        with open("memory/" + filename + ".txt", "r", encoding="utf-8") as file:
+        with open("memoryV1/" + filename + ".txt", "r", encoding="utf-8") as file:
             lines = {}
             for line in file:
                 key, data = line.split("|")
@@ -29,7 +38,7 @@ def readall(filename: str):
 def read_key(filename: str, key: str):
     key = key.lower()
     try:
-        with open("memory/" + filename + ".txt", "r", encoding="utf-8") as file:
+        with open("memoryV1/" + filename + ".txt", "r", encoding="utf-8") as file:
             for line in file:
                 local_key, data = line.split("|")
                 local_key, data = local_key.strip(), data.strip()
@@ -45,7 +54,7 @@ def delete_key(filename: str, key: str):
     try:
         file = readall(filename)
         file.pop(key)
-        with open("memory/" + filename + ".txt", "w+", encoding="utf-8") as f:
+        with open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8") as f:
             for k in file:
                 f.write(k + " | " + file[k] + "\n")
         return True
@@ -54,7 +63,7 @@ def delete_key(filename: str, key: str):
 
 
 def clear_keys(filename: str):
-    open("memory/" + filename + ".txt", "w+", encoding="utf-8")
+    open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8").close()
 
 
 def new_key(filename: str, key: str, data: str):
@@ -62,10 +71,10 @@ def new_key(filename: str, key: str, data: str):
     delete_key(filename, key)
 
     try:
-        with open("memory/" + filename + ".txt", "a+", encoding="utf-8") as f:
+        with open("memoryV1/" + filename + ".txt", "a+", encoding="utf-8") as f:
             f.write(key + " | " + data + "\n")
-    except:
-        with open("memory/" + filename + ".txt", "w+", encoding="utf-8") as f:
+    except FileNotFoundError:
+        with open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8") as f:
             f.write(key + " | " + data + "\n")
 
 
@@ -129,10 +138,10 @@ class MarryData:
 """-------------------------------------------------------------------------------------------"""
 
 
-def default(money):
+def format_money(money):
     try:
         float(money)
-    except:
+    except ValueError:
         return None
     return "{:1.0f}".format(money)
 
@@ -144,7 +153,7 @@ class BalanceData:
 
     @staticmethod
     def set_balance(filename: str, user: str, balance: float | int | str):
-        balance = default(balance)
+        balance = format_money(balance)
         new_key(balance_key + filename, user, balance)
 
     @staticmethod
@@ -167,7 +176,7 @@ class BalanceData:
         old_balance = int(old_balance)
         if old_balance + money < 0:
             return old_balance + money
-        new_key(balance_key + filename, user, default(int(old_balance) + money))
+        new_key(balance_key + filename, user, format_money(int(old_balance) + money))
 
     def allbalance(filename: str):
         return readall(balance_key + filename)
@@ -185,7 +194,7 @@ class CoinflipData:
 
     @staticmethod
     def new_bid(filename: str, user: str, money: int | float):
-        money = default(money)
+        money = format_money(money)
         new_key(coinflip_key + filename, user, money)
 
     @staticmethod

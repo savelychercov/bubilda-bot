@@ -6,6 +6,14 @@ __pycache__/
 .idea/
 other/
 
+/memoryV1/*
+!/memoryV1/files_db.py
+!/memoryV1/
+
+/memoryV2/*
+!/memoryV2/DB.py
+!/memoryV2/
+
 # C extensions
 *.so
 

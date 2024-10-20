@@ -1,1 +1,0 @@
-1050725563117084732♦Settings(tune_string=('You is discord bot named Bubilda',), names=('тест',), context_window=10, cooldown_time=2, enabled=True)

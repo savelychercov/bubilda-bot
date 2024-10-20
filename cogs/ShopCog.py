@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-from memory.files import InventoryData as inv
-from memory.files import BalanceData as bal
-from memory.files import ShopData
+from memoryV1.files_db import InventoryData as inv
+from memoryV1.files_db import BalanceData as bal
+from memoryV1.files_db import ShopData
 import library.logger as logger
 from datetime import datetime
 import traceback
