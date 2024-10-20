@@ -12,7 +12,6 @@ pisi_key = config.pisi_key
 shop_key = config.shop_key
 inventory_key = config.inventory_key
 
-
 files_path = "memoryV1/files/"
 
 
@@ -22,59 +21,70 @@ def check_path():
         os.makedirs(files_path)
 
 
-def readall(filename: str):
+def read_all(filename: str):
+    check_path()
     try:
-        with open("memoryV1/" + filename + ".txt", "r", encoding="utf-8") as file:
+        with open(files_path + filename + ".txt", "r", encoding="utf-8") as file:
             lines = {}
             for line in file:
                 key, data = line.split("|")
                 key, data = key.strip(), data.strip()
                 lines[key] = data
             return lines
-    except:
+    except FileNotFoundError:
+        return None
+    except ValueError:
         return None
 
 
 def read_key(filename: str, key: str):
+    check_path()
     key = key.lower()
     try:
-        with open("memoryV1/" + filename + ".txt", "r", encoding="utf-8") as file:
+        with open(files_path + filename + ".txt", "r", encoding="utf-8") as file:
             for line in file:
                 local_key, data = line.split("|")
                 local_key, data = local_key.strip(), data.strip()
                 if local_key == key:
                     return data
             return None
-    except:
+    except FileNotFoundError:
         return None
 
 
 def delete_key(filename: str, key: str):
+    check_path()
     key = key.lower()
     try:
-        file = readall(filename)
+        file = read_all(filename)
+        if file is None:
+            return False
         file.pop(key)
-        with open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8") as f:
+        with open(files_path + filename + ".txt", "w+", encoding="utf-8") as f:
             for k in file:
                 f.write(k + " | " + file[k] + "\n")
         return True
-    except:
+    except KeyError:
+        return False
+    except FileNotFoundError:
         return False
 
 
 def clear_keys(filename: str):
-    open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8").close()
+    check_path()
+    open(files_path + filename + ".txt", "w+", encoding="utf-8").close()
 
 
 def new_key(filename: str, key: str, data: str):
+    check_path()
     key, data = str(key.lower()), str(data)
     delete_key(filename, key)
 
     try:
-        with open("memoryV1/" + filename + ".txt", "a+", encoding="utf-8") as f:
+        with open(files_path + filename + ".txt", "a+", encoding="utf-8") as f:
             f.write(key + " | " + data + "\n")
     except FileNotFoundError:
-        with open("memoryV1/" + filename + ".txt", "w+", encoding="utf-8") as f:
+        with open(files_path + filename + ".txt", "w+", encoding="utf-8") as f:
             f.write(key + " | " + data + "\n")
 
 
@@ -88,7 +98,7 @@ class KeysData:
 
     @staticmethod
     def read_all(filename: str):
-        return readall(keys_key + filename)
+        return read_all(keys_key + filename)
 
     @staticmethod
     def read_key(filename: str, key: str):
@@ -104,7 +114,7 @@ class KeysData:
 
 
 def married_on_user(filename: str, user: str):
-    marriages = readall(marry_key + filename)
+    marriages = read_all(marry_key + filename)
     try:
         return marriages[user]
     except KeyError:
@@ -128,11 +138,12 @@ class MarryData:
 
     @staticmethod
     def divorce(filename: str, user: str):
-        return delete_key(marry_key + filename, user) or delete_key(marry_key + filename, married_on_user(filename, user))
+        return delete_key(marry_key + filename, user) or delete_key(marry_key + filename,
+                                                                    married_on_user(filename, user))
 
     @staticmethod
     def married_users(filename: str):
-        return readall(marry_key + filename)
+        return read_all(marry_key + filename)
 
 
 """-------------------------------------------------------------------------------------------"""
@@ -178,10 +189,12 @@ class BalanceData:
             return old_balance + money
         new_key(balance_key + filename, user, format_money(int(old_balance) + money))
 
-    def allbalance(filename: str):
-        return readall(balance_key + filename)
+    @staticmethod
+    def all_balance(filename: str):
+        return read_all(balance_key + filename)
 
-    def checkdaily(filename: str, user: str, today: str):
+    @staticmethod
+    def check_daily(filename: str, user: str, today: str):
         check = read_key(daily_key + filename, user)
         new_key(daily_key + filename, user, today)
         if check == today:
@@ -211,14 +224,14 @@ class CoinflipData:
 
     @staticmethod
     def get_bids(filename: str):
-        return readall(coinflip_key + filename)
+        return read_all(coinflip_key + filename)
 
 
 class DatesData:
 
     @staticmethod
     def get_dates(filename: str):
-        return readall(dates_key + filename)
+        return read_all(dates_key + filename)
 
     @staticmethod
     def new_date(filename: str, date: str, name: str):
@@ -233,7 +246,7 @@ class PencilsData:
 
     @staticmethod
     def get_all_pisi(filename: str):
-        return readall(pisi_key + filename)
+        return read_all(pisi_key + filename)
 
     @staticmethod
     def set_pisa(filename: str, user: str, heigth: int):
@@ -271,7 +284,8 @@ class PencilsData:
         if (t := read_key(file, user)) is not None:
             if (last := t.split("/")[-1]).split(":")[0] == date:
                 new_key(file, user,
-                    "/".join(t.split("/")[:-1]) + "/" + last.split(":")[0] + ":" + str(int(last.split(":")[1]) + value))
+                        "/".join(t.split("/")[:-1]) + "/" + last.split(":")[0] + ":" + str(
+                            int(last.split(":")[1]) + value))
             else:
                 new_key(file, user, t + "/" + date + ":" + str(value))
         else:
@@ -311,7 +325,7 @@ class ShopData:
 
     @staticmethod
     def get_shop(filename: str | int) -> list[ShopSlot]:
-        raw_dict = readall(shop_key + str(filename))
+        raw_dict = read_all(shop_key + str(filename))
 
         if raw_dict is None:
             return []

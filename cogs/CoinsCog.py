@@ -120,7 +120,7 @@ class CoinsCog(commands.Cog):
 
     @commands.command(brief="Узнать топ по балансу", aliases=["balls", "baltop", "bt", "btop", "t"])
     async def top(self, ctx):
-        balls = BalanceData.allbalance(str(ctx.guild.id))
+        balls = BalanceData.all_balance(str(ctx.guild.id))
         if balls:
 
             for key in balls:
@@ -163,7 +163,7 @@ class CoinsCog(commands.Cog):
     @commands.command(brief="Заработать немного денег", aliases=["d"])
     async def daily(self, ctx):
         today, filename, user = str(ctx.message.created_at.date()), str(ctx.guild.id), str(ctx.author.id)
-        check = BalanceData.checkdaily(filename, user, today)
+        check = BalanceData.check_daily(filename, user, today)
         if check:
             money = randint(100, 500)
             BalanceData.add_balance(filename, user, money)

@@ -3,6 +3,15 @@ from typing import Any
 import datetime
 
 
+files_path = "memoryV2/files/"
+
+
+def check_path():
+    import os
+    if not os.path.exists(files_path):
+        os.makedirs(files_path)
+
+
 class DataBase:
     """DataBase class for easy work with files"""
     def __init__(self, key: str, slice_key: str = "♦"):
@@ -10,13 +19,15 @@ class DataBase:
         self.slice_key = slice_key
 
     def clear_all_keys(self, filename: str | int):
+        check_path()
         filename = str(filename)
-        open("memoryV2/" + self.key + filename + ".txt", "w+", encoding="utf-8").close()
+        open(files_path + self.key + filename + ".txt", "w+", encoding="utf-8").close()
 
     def read_all_keys(self, filename: str | int):
+        check_path()
         filename = str(filename)
         try:
-            with open("memoryV2/" + self.key + filename + ".txt", "r", encoding="utf-8") as file:
+            with open(files_path + self.key + filename + ".txt", "r", encoding="utf-8") as file:
                 lines = {}
                 for line in file:
                     if not line.strip():
@@ -29,9 +40,10 @@ class DataBase:
             return {}
 
     def set_all_keys(self, filename: str | int, keys: dict[str | int, str | int]):
+        check_path()
         filename = str(filename)
 
-        with open("memoryV2/" + self.key + filename + ".txt", "w+", encoding="utf-8") as file:
+        with open(files_path + self.key + filename + ".txt", "w+", encoding="utf-8") as file:
             for key, value in keys.items():
                 string = str(key) + self.slice_key + str(value)+"\n"
                 file.write(string)

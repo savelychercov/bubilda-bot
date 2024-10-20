@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord import utils
-from memoryV1.files_db import readall, read_key, PencilsData, new_key, delete_key, InventoryData, daily_key, pisi_key, ShopData
+from memoryV1.files_db import read_all, read_key, PencilsData, new_key, delete_key, InventoryData, daily_key, pisi_key, ShopData
 import random
 import config
 import traceback
@@ -144,7 +144,7 @@ async def send_pisi_event(bot, current: commands.Context = None):
             await send_height_pisi_event_to_channel(current.channel)
         return
 
-    channels = readall("enabledpisievents")
+    channels = read_all("enabledpisievents")
     if channels is None: return
 
     for guild_id, channel_id in channels.items():
@@ -159,7 +159,7 @@ async def sell_item_event(bot: commands.Bot, guarant: bool = False, context = No
     if not guarant and config.sell_item_on_event_chance < random.random(): return
 
     if not context:
-        channels = readall("enabledpisievents").items()
+        channels = read_all("enabledpisievents").items()
     else:
         channels = [(str(context.guild.id), str(context.channel.id))]
 
@@ -408,7 +408,7 @@ class PisiCog(commands.Cog):
             guild = str(ctx.guild.id)
 
             data = {}
-            data_raw = readall(config.filekeys.pisi_key + "log" + guild)
+            data_raw = read_all(config.filekeys.pisi_key + "log" + guild)
 
             if not data_raw:
                 await ctx.send("Нет данных <:funnycat:1051348714423328778>")
@@ -634,7 +634,7 @@ class PisiCog(commands.Cog):
             return
 
         with open("memoryV1/temppisilogtosend.txt", "w+", encoding="utf-8") as file:
-            data = readall(f"{config.filekeys.pisi_key}log{guild}")
+            data = read_all(f"{config.filekeys.pisi_key}log{guild}")
 
             if not data:
                 await ctx.send("Нет данных <:funnycat:1051348714423328778>")

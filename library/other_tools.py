@@ -67,6 +67,8 @@ class EventTimeClass:
         return False
 
     def read_time(self) -> datetime:
+        if EventTimeDB.read_key("", "time") is None:
+            return None
         time_str = EventTimeDB.read_key("", "time").strip()
         if time_str is None:
             return None
