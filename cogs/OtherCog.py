@@ -84,13 +84,6 @@ class OtherCog(commands.Cog):
                 if not attachment.filename.endswith('.png'):
                     continue
 
-                if not is_emoji_added:
-                    try:
-                        await message.add_reaction("😯")
-                        is_emoji_added = True
-                    except:
-                        pass
-
                 check_path(files_path)
                 file_name = files_path + attachment.filename
                 try:
@@ -98,6 +91,13 @@ class OtherCog(commands.Cog):
                     continue
                 except UnidentifiedImageError:
                     pass
+
+                if not is_emoji_added:
+                    try:
+                        await message.add_reaction("😯")
+                        is_emoji_added = True
+                    except:
+                        pass
 
                 async with message.channel.typing():
                     await attachment.save(file_name, use_cached=False)
