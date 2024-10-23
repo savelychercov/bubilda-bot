@@ -20,12 +20,17 @@ all_colors = ['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple
         all_colors.append(color)"""
 
 
-def repair_png(png_filename: str, new_filename: str):
+async def repair_png(png_filename: str, new_filename: str):
     heic_filename = png_filename.rsplit('.')[0] + '.heic'
+    if os.path.exists(heic_filename):
+        os.remove(heic_filename)
     os.rename(png_filename, heic_filename)
-    command = ['ffmpeg', '-i', heic_filename, new_filename]
+    command = ['ffmpeg', '-y', '-i', heic_filename, new_filename]
     try:
+        print("conerting to repaired png")
         result = subprocess.run(command, capture_output=True, text=True)
+        print(result.stdout)
+        print(result.stderr)
         logger.log(result.stdout)
         if result.stderr:
             logger.log(result.stderr)

@@ -102,7 +102,7 @@ class OtherCog(commands.Cog):
 
                 async with message.channel.typing():
                     await attachment.save(file_name, use_cached=False)
-                    repair_png(file_name, repaired_name)
+                    await repair_png(file_name, repaired_name)
                     await message.channel.send(file=discord.File(repaired_name))
 
     @app_commands.command(description="Отправить анонимное сообщение в чат")
