@@ -78,24 +78,28 @@ class OtherCog(commands.Cog):
             if message.author == bot.user:
                 return
 
-            try:
-                await message.add_reaction("😯")
-            except:
-                pass
+            is_emoji_added = False
 
-            async with message.channel.typing():
-                for attachment in message.attachments:
-                    if not attachment.filename.endswith('.png'):
-                        continue
+            for attachment in message.attachments:
+                if not attachment.filename.endswith('.png'):
+                    continue
 
-                    check_path(files_path)
-                    file_name = files_path + attachment.filename
+                if not is_emoji_added:
                     try:
-                        Image.open(io.BytesIO(await attachment.read()))
-                        continue
-                    except UnidentifiedImageError:
+                        await message.add_reaction("😯")
+                        is_emoji_added = True
+                    except:
                         pass
 
+                check_path(files_path)
+                file_name = files_path + attachment.filename
+                try:
+                    Image.open(io.BytesIO(await attachment.read()))
+                    continue
+                except UnidentifiedImageError:
+                    pass
+
+                async with message.channel.typing():
                     await attachment.save(file_name, use_cached=False)
                     repair_png(file_name)
                     await message.channel.send(file=discord.File(file_name))

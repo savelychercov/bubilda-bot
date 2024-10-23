@@ -154,9 +154,9 @@ class DeveloperCog(commands.Cog):
         if ctx.author.id not in admin_ids:
             await ctx.send("Низя")
         try:
-            name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            make_backup(name)
-            await ctx.send(f"Бекап создан с именем {name}")
+            new_backup_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            make_backup(new_backup_name)
+            await ctx.send(f"Бекап создан с именем {new_backup_name}")
             clear_data()
             restore_backup(name)
             await ctx.send(f"Бекап с именем {name} восстановлен")

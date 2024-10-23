@@ -408,7 +408,7 @@ class PisiCog(commands.Cog):
             guild = str(ctx.guild.id)
 
             data = {}
-            data_raw = read_all(config.filekeys.pisi_key + "log" + guild)
+            data_raw = read_all(config.pisi_key + "log" + guild)
 
             if not data_raw:
                 await ctx.send("Нет данных <:funnycat:1051348714423328778>")
@@ -518,7 +518,7 @@ class PisiCog(commands.Cog):
 
             guild = str(ctx.guild.id)
 
-            data_raw = read_key(config.filekeys.pisi_key + "log" + str(guild), str(user))
+            data_raw = read_key(config.pisi_key + "log" + str(guild), str(user))
 
             if not data_raw:
                 await ctx.send("Нет данных <:funnycat:1051348714423328778>")
@@ -634,7 +634,7 @@ class PisiCog(commands.Cog):
             return
 
         with open("memoryV1/temppisilogtosend.txt", "w+", encoding="utf-8") as file:
-            data = read_all(f"{config.filekeys.pisi_key}log{guild}")
+            data = read_all(f"{config.pisi_key}log{guild}")
 
             if not data:
                 await ctx.send("Нет данных <:funnycat:1051348714423328778>")
