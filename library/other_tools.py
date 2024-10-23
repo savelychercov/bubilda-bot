@@ -25,7 +25,7 @@ async def repair_png(png_filename: str, new_filename: str):
     if os.path.exists(heic_filename):
         os.remove(heic_filename)
     os.rename(png_filename, heic_filename)
-    command = ['ffmpeg', '-y', '-i', heic_filename, new_filename]
+    command = ['ffmpeg', '-y', '-i', heic_filename, '-c:v', 'png', new_filename]
     try:
         print("conerting to repaired png")
         result = subprocess.run(command, capture_output=True, text=True)
