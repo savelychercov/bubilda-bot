@@ -27,13 +27,8 @@ async def repair_png(png_filename: str, new_filename: str):
     os.rename(png_filename, heic_filename)
     command = ['ffmpeg', '-y', '-i', heic_filename, new_filename]
     try:
-        result = subprocess.run(command, capture_output=True, text=True)
-        print(result.stdout)
-        print(result.stderr)
-        logger.log(result.stdout)
-        if result.stderr:
-            logger.log(result.stderr)
-        # os.remove(heic_filename)
+        subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.remove(heic_filename)
     except subprocess.CalledProcessError as e:
         raise e
 

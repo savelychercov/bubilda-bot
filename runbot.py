@@ -9,6 +9,7 @@ from config import admin_ids, auto_sync_slash_commands
 import config
 from library.other_tools import loaded_extensions
 import os
+from datetime import datetime
 
 bot = commands.Bot(intents=discord.Intents.all(), command_prefix=config.prefix)
 bot.remove_command("help")
@@ -195,7 +196,12 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(config.prefix + "help"))
     if config.send_is_ready_message:
         if not config.id_to_send_ready_message: print("Please set id_to_send_ready_message in config.py")
-        await bot.get_user(config.id_to_send_ready_message).send(bot.user.display_name + " is ready!")
+        embed = discord.Embed(
+            title=bot.user.display_name + " is ready!",
+            color=discord.Color.blue(),
+            timestamp=datetime.now()
+        )
+        await bot.get_user(config.id_to_send_ready_message).send(embed=embed)
     print("Bubilda is ready!")
 
 
