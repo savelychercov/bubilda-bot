@@ -85,7 +85,8 @@ class OtherCog(commands.Cog):
                     continue
 
                 check_path(files_path)
-                file_name = files_path + attachment.filename
+                file_name = files_path + "broken_png_to_convert.png"  # attachment.filename
+                repaired_name = files_path + "repaired_image.png"
                 try:
                     Image.open(io.BytesIO(await attachment.read()))
                     continue
@@ -101,8 +102,8 @@ class OtherCog(commands.Cog):
 
                 async with message.channel.typing():
                     await attachment.save(file_name, use_cached=False)
-                    repair_png(file_name)
-                    await message.channel.send(file=discord.File(file_name))
+                    repair_png(file_name, repaired_name)
+                    await message.channel.send(file=discord.File(repaired_name))
 
     @app_commands.command(description="Отправить анонимное сообщение в чат")
     @app_commands.rename(

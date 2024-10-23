@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from os import listdir
 import subprocess
 import os
+from library import logger
 
 T_COLOR = Literal['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple', 'magenta', 'orange', 'pink',
                   'purple', 'random', 'red', 'teal', 'yellow']
@@ -19,13 +20,16 @@ all_colors = ['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple
         all_colors.append(color)"""
 
 
-def repair_png(png_filename: str):
+def repair_png(png_filename: str, new_filename: str):
     heic_filename = png_filename.rsplit('.')[0] + '.heic'
     os.rename(png_filename, heic_filename)
-    command = ['ffmpeg', '-i', heic_filename, png_filename]
+    command = ['ffmpeg', '-i', heic_filename, new_filename]
     try:
-        subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        os.remove(heic_filename)
+        result = subprocess.run(command, capture_output=True, text=True)
+        logger.log(result.stdout)
+        if result.stderr:
+            logger.log(result.stderr)
+        # os.remove(heic_filename)
     except subprocess.CalledProcessError as e:
         raise e
 
