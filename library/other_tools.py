@@ -5,6 +5,8 @@ import random
 import config
 from datetime import datetime, timedelta
 from os import listdir
+import subprocess
+import os
 
 T_COLOR = Literal['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple', 'magenta', 'orange', 'pink',
                   'purple', 'random', 'red', 'teal', 'yellow']
@@ -15,6 +17,17 @@ all_colors = ['blue', 'blurple', 'default', 'fuchsia', 'gold', 'green', 'greyple
 """for color in dir(discord.Colour):
     if "_" not in color and color not in ["value", "b", "g", "r"]:
         all_colors.append(color)"""
+
+
+def repair_png(png_filename: str):
+    heic_filename = png_filename.rsplit('.')[0] + '.heic'
+    os.rename(png_filename, heic_filename)
+    command = ['ffmpeg', '-i', heic_filename, png_filename]
+    try:
+        subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.remove(heic_filename)
+    except subprocess.CalledProcessError as e:
+        raise e
 
 
 def get_discord_color(color: T_COLOR) -> discord.Colour:
@@ -83,4 +96,5 @@ class EventTimeClass:
 EventTime = EventTimeClass()
 
 if __name__ == "__main__":
-    raise NotImplementedError("this file should not be run directly")
+    repair_png("dog.png")
+    # raise NotImplementedError("this file should not be run directly")

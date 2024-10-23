@@ -8,11 +8,11 @@ other/
 
 /memoryV1/*
 !/memoryV1/files_db.py
-!/memoryV1/
+/memoryV1/files/
 
 /memoryV2/*
 !/memoryV2/DB.py
-!/memoryV2/
+/memoryV2/files/
 
 backups/
 

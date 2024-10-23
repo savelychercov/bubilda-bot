@@ -3,9 +3,12 @@ from discord.ext import commands
 from discord import app_commands
 import random
 import transliterate
+from PIL import Image, UnidentifiedImageError
+from memoryV2.DB import check_path, files_path
+import io
 
 import config
-from library.other_tools import get_discord_color, T_COLOR
+from library.other_tools import get_discord_color, T_COLOR, repair_png
 from library.graphics import SearchContent
 
 
@@ -66,6 +69,36 @@ class OtherCog(commands.Cog):
                         await message.add_reaction("<:emj:1268135319945875581>")
                     except discord.errors.Forbidden | discord.errors.HTTPException:
                         pass
+
+        @self.bot.listen()
+        async def on_message(message: discord.Message):
+            if not message.attachments:
+                return
+
+            if message.author == bot.user:
+                return
+
+            try:
+                await message.add_reaction("😯")
+            except:
+                pass
+
+            async with message.channel.typing():
+                for attachment in message.attachments:
+                    if not attachment.filename.endswith('.png'):
+                        continue
+
+                    check_path(files_path)
+                    file_name = files_path + attachment.filename
+                    try:
+                        Image.open(io.BytesIO(await attachment.read()))
+                        continue
+                    except UnidentifiedImageError:
+                        pass
+
+                    await attachment.save(file_name, use_cached=False)
+                    repair_png(file_name)
+                    await message.channel.send(file=discord.File(file_name))
 
     @app_commands.command(description="Отправить анонимное сообщение в чат")
     @app_commands.rename(
