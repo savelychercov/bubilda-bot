@@ -2,12 +2,12 @@ import asyncio
 from datetime import datetime, timedelta
 from pprint import pp
 import gspread
-import requests
 import pytz
 from tabulate import tabulate
 import time
 import functools
 import json
+import httpx
 
 
 url_buyout_statistics = "https://seller-analytics-api.wildberries.ru/api/v2/nm-report/detail"
@@ -68,6 +68,10 @@ def rate_limited(time_limit=60, max_requests=1):
     return decorator
 
 
+class DateNotFound(Exception):
+    pass
+
+
 class Nomenclature:
     def __init__(self, nomenclature: dict):
         self.id = nomenclature["nmID"]
@@ -95,6 +99,27 @@ class SheetsBot:
             raise
         self.nms_for_statistics = None
         self.advert_ids = None
+
+    def check_spreadsheet_url(self, url: str) -> bool:
+        try:
+            self.gc.open_by_url(url)
+            return True
+        except gspread.exceptions.SpreadsheetNotFound:
+            return False
+
+    def check_worksheet_name(self, name: str) -> bool:
+        try:
+            self.spreadsheet.worksheet(name)
+            return True
+        except gspread.exceptions.WorksheetNotFound:
+            return False
+
+    def set_worksheet_name(self, name: str) -> bool:
+        try:
+            self.wks = self.spreadsheet.worksheet(name)
+            return True
+        except gspread.exceptions.WorksheetNotFound:
+            return False
 
     @staticmethod
     def get_yesterday_date() -> str:
@@ -178,7 +203,8 @@ class SheetsBot:
                 }
             }
 
-            response = requests.post(url_nomenclatures, headers=headers, json=payload)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url_nomenclatures, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
 
@@ -198,11 +224,13 @@ class SheetsBot:
 
     @rate_limited(time_limit=60, max_requests=5)
     async def get_campaigns_ids(self) -> list[int]:
+        print("Trying to get campaigns ids")
         headers = {
             "Authorization": self.token,
             "Content-Type": "application/json"
         }
-        response = requests.get(url_campaign_ids, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url_campaign_ids, headers=headers)
         if response.status_code != 200: print(response.json())
         response.raise_for_status()
 
@@ -213,6 +241,7 @@ class SheetsBot:
                 status = advert_list["status"]
                 advert_ids[ad_id] = (status, datetime.strptime(advert["changeTime"], "%Y-%m-%dT%H:%M:%S.%f%z"))
         sorted_ids = sorted(advert_ids.items(), key=lambda x: x[1][1], reverse=True)
+        print(f"Got {len(sorted_ids)} campaign ids")
         return [i[0] for i in sorted_ids]
 
     @rate_limited(time_limit=60, max_requests=3)
@@ -221,6 +250,7 @@ class SheetsBot:
             date: str | datetime,
             nomenclatures: list[int]) -> dict[int, dict[str, int]]:
 
+        print("Trying to get buyout statistics")
         if not isinstance(nomenclatures, list):
             nomenclatures = list(nomenclatures)
 
@@ -246,7 +276,8 @@ class SheetsBot:
             }
             if nomenclatures:
                 payload["nmIDs"] = nomenclatures
-            response = requests.post(url_buyout_statistics, headers=headers, json=payload)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url_buyout_statistics, headers=headers, json=payload)
             response.raise_for_status()
             if response.json()["data"].get("isNextPage", False):
                 current_page += 1
@@ -278,10 +309,13 @@ class SheetsBot:
                     break
             else:
                 data_dict[nm_id] = {h: None for h in data_headers_to_select}
+
+        print(f"Got {len(data_dict)} buyout statistics")
         return data_dict
 
     @rate_limited(time_limit=60, max_requests=1)
     async def get_campaign_statistics(self, advert_ids: list[int], dates: str | datetime | list) -> dict:
+        print("Trying to get campaign statistics")
         headers = {
             "Authorization": self.token,
             "Content-Type": "application/json"
@@ -306,9 +340,11 @@ class SheetsBot:
                 "dates": dates
             })
 
-        response = requests.post(url_campaign_fullstats, headers=headers, json=payload)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url_campaign_fullstats, headers=headers, json=payload)
         if response.status_code != 200: print(response.json())
         response.raise_for_status()
+        print("Got campaign statistics")
         return response.json()
 
     async def get_fullstats(self, date: str) -> dict[int, dict[str, int]]:
@@ -355,54 +391,52 @@ class SheetsBot:
         return nomenclatures
 
     async def update_table_with_data(self, date: str, data: dict[int, dict[str, float | int]]) -> None:
-        """
-        Обновляет таблицу Google Sheets, вставляя данные о расходах на рекламу (РК расходы) и фактических заказах (Факт)
-        для указанных номенклатур на указанную дату.
-
-        :param date: Текущая дата в формате "YYYY-MM-DD".
-        :param data: Словарь с данными по номенклатурам в формате:
-                     {номенклатура: {'adExpenses': <значение>, 'ordersCount': <значение>}, ...}.
-        """
-        # Получаем все данные таблицы
         print("Загрузка данных из таблицы...")
-        table_data = self.wks.get_all_values()
+        table_data = await asyncio.to_thread(self.wks.get_all_values)
         print(f"Получено {len(table_data)} строк из таблицы.")
 
-        # Извлекаем список номенклатур из таблицы
         print("Извлечение списка номенклатур из таблицы...")
         table_nomenclatures = await self.extract_nomenclatures()
         print(f"Найдено {len(table_nomenclatures)} номенклатур в таблице.")
 
-        # Находим индекс столбца для текущей даты
-        header_row = table_data[0]
-
         # Форматируем дату
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         formatted_date = f"{date_obj.day} {MONTHS[date_obj.strftime('%B')]}"
-        try:  # Ищем столбец с соответствующей датой в заголовке
+
+        # Поиск столбца с датой
+        header_row = table_data[0]
+        try:
             print(f"Поиск столбца с датой {date}...")
-            header_row = [header.lower() for header in header_row]  # Приводим заголовок к нижнему регистру
-            date_column_index = header_row.index(formatted_date) + 1  # Индекс столбца с датой
+            header_row = [header.lower() for header in header_row]
+            date_column_index = header_row.index(formatted_date) + 1
             print(f"Столбец с датой {formatted_date} найден: индекс {date_column_index}.")
         except ValueError:
             raise ValueError(f"Дата {formatted_date} не найдена в заголовке таблицы.")
 
-        # Проходим по строкам таблицы, чтобы обновить данные
         print("Начало обновления данных...")
         for row_index, row in enumerate(table_data):
-            if len(row) > 1 and row[1].isdigit():  # Проверяем строки с номенклатурами
-                nm_id = int(row[1])  # Получаем номенклатуру из второго столбца
+            if len(row) > 1 and row[1].isdigit():
+                nm_id = int(row[1])
 
-                # Если номенклатура есть в таблице и в переданных данных
                 if nm_id in data:
-                    ad_expenses = data[nm_id].get('adExpenses', 0)  # Расходы на рекламу
-                    orders_count = data[nm_id].get('ordersCount', 0)  # Фактические заказы
-                    # print(f"Обновление строки {row_index + 1}: номенклатура {nm_id}, РК расходы: {ad_expenses}, Факт: {orders_count}")
-                    # Записываем значения в таблицу
+                    ad_expenses = data[nm_id].get('adExpenses', 0)
+                    orders_count = data[nm_id].get('ordersCount', 0)
+
+                    # Обновляем "РК расходы"
                     if not table_data[row_index + 2][date_column_index]:
-                        self.wks.update([[ad_expenses]], self.cell(date_column_index, row_index + 2))  # "РК расходы"
+                        await asyncio.to_thread(
+                            self.wks.update,
+                            self.cell(date_column_index, row_index + 2),
+                            [[ad_expenses]],
+                        )
+
+                    # Обновляем "Факт"
                     if not table_data[row_index + 1][date_column_index]:
-                        self.wks.update([[orders_count]], self.cell(date_column_index, row_index + 1))  # "Факт"
+                        await asyncio.to_thread(
+                            self.wks.update,
+                            self.cell(date_column_index, row_index + 1),
+                            [[orders_count]],
+                        )
 
         print("Обновление данных завершено.")
 
