@@ -87,7 +87,7 @@ class BotManagerCog(commands.Cog):
 
         bot_path = os.path.join(self.bots_folder, bot_name, "main.py")
         if os.name == "posix":
-            venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts", "bin", "python")
+            venv_path = os.path.join(self.bots_folder, bot_name, "venv", "bin", "python")
         elif os.name == 'nt':
             venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts", "python.exe")
         else:
