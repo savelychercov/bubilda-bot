@@ -14,6 +14,10 @@ other/
 !/memoryV2/DB.py
 /memoryV2/files/
 
+/subbots/*
+
+*/temp/
+
 backups/
 library/gspread_credentials.json
 library/spreadsheet_data.json

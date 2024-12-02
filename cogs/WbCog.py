@@ -7,6 +7,8 @@ from library.logger import log, err
 from datetime import datetime, timedelta
 import config
 import httpx
+import time
+
 
 def slice_text(text: str, length: int = 1990) -> list[str]:
     if not text:
@@ -27,48 +29,55 @@ class WbCog(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def try_update_table(self):
-        print(f"Checking for updates... {datetime.now()}")
-        data = await self.get_spreadsheet_data()
-        current_date = wb.SheetsBot.get_yesterday_date()
-        if current_date == data["last_update"]:
-            print("No updates")
-            return
-
-        last_update_date = datetime.strptime(data["last_update"], "%Y-%m-%d")
-        current_datetime = datetime.strptime(current_date, "%Y-%m-%d")
-
-        dates_to_update = []
-        while last_update_date < current_datetime:
-            date = last_update_date + timedelta(days=1)
-            last_update_date = date
-            dates_to_update.append(date.strftime("%Y-%m-%d"))
-
-        if not dates_to_update:
-            print("No updates 2")
-            return
-
-        print(f"Updating for dates: {dates_to_update}")
-
         try:
-            wb_bot = await self.try_get_wb_bot()
-        except wb.gspread.exceptions.WorksheetNotFound as e:
-            err(e, "Worksheet not found")
-            return
-
-        for date in dates_to_update:
-            stats = await wb_bot.get_fullstats(date)
+            print(f"Checking for updates... {datetime.now()}")
+            data = await self.get_spreadsheet_data()
+            current_date = wb.SheetsBot.get_yesterday_date()
+            if current_date == data["last_update"]:
+                print("No updates")
+                return
+    
+            last_update_date = datetime.strptime(data["last_update"], "%Y-%m-%d")
+            current_datetime = datetime.strptime(current_date, "%Y-%m-%d")
+    
+            dates_to_update = []
+            while last_update_date < current_datetime:
+                date = last_update_date + timedelta(days=1)
+                last_update_date = date
+                dates_to_update.append(date.strftime("%Y-%m-%d"))
+    
+            if not dates_to_update:
+                print("No updates 2")
+                return
+    
+            print(f"Updating for dates: {dates_to_update}")
+    
             try:
-                await wb_bot.update_table_with_data(date, stats)
-            except wb.DateNotFound:
-                log(f"Date not found in table: {date}")
-            except httpx.ReadTimeout:
-                log(f"Cannot fetch data for date: {date}")
-                self.restart_task()
+                wb_bot = await self.try_get_wb_bot()
+            except wb.gspread.exceptions.WorksheetNotFound as e:
+                err(e, "Worksheet not found")
+                return
+    
+            for date in dates_to_update:
+                start_time = time.time()
+                stats = await wb_bot.get_fullstats(date)
+                try:
+                    await wb_bot.update_table_with_data(date, stats)
+                except wb.DateNotFound:
+                    log(f"Date not found in table: {date}")
+                except httpx.ReadTimeout:
+                    log(f"Cannot fetch data for date: {date}")
+                    self.restart_task()
+    
+                await self.set_spreadsheet_data(last_update=date)
 
-            await self.set_spreadsheet_data(last_update=date)
-            log(f"Updated {date} in {wb_bot.spreadsheet.url}")
+                log(f"Updated {date} in {wb_bot.spreadsheet.url} ({time.time() - start_time:.2f} sec)")
+        except Exception as e:
+            err(e, "Error in try_update_table")
+            self.restart_task()
 
     def cog_load(self):
+        if config.testing: return
         self.event_task = self.try_update_table.start()
 
     def cog_unload(self):
@@ -149,7 +158,7 @@ class WbCog(commands.Cog):
             await ctx.send("Низя")
             return
         if date is None:
-            await ctx.send("Укажите дату! Пример: " + wb.SheetsBot.get_yesterday_date())
+            await ctx.send("Укажите дату! Например: "+wb.SheetsBot.get_yesterday_date())
             return
         try:
             datetime.strptime(date, "%Y-%m-%d")
@@ -168,8 +177,12 @@ class WbCog(commands.Cog):
             await ctx.send("Текущая таблица: " + (await self.get_spreadsheet_data())["spreadsheet_url"])
             await ctx.send("Укажите ссылку на таблицу если хотите ее изменить")
             return
-        if (await self.try_update_table()).check_spreadsheet_url(url) is False:
-            await ctx.send("Таблица не найдена")
+        try:
+            if wb.SheetsBot.check_spreadsheet_url(url) is False:
+                await ctx.send("Таблица не найдена")
+                return
+        except PermissionError:
+            await ctx.send("Нет доступа к таблице, добавьте бота как редактора (wbsheetsbot@wbsheetsbot441305-m5.iam.gserviceaccount.com)")
             return
         await self.set_spreadsheet_data(spreadsheet_url=url)
         self.wb_bot = None
@@ -179,9 +192,6 @@ class WbCog(commands.Cog):
     async def sheets_name(self, ctx: commands.Context, *, name: str = None):
         if ctx.author.id not in config.admin_ids:
             await ctx.send("Низя")
-            return
-        if not (await self.try_get_wb_bot()).set_worksheet_name(name):
-            await ctx.send("Имя рабочего листа не найдено")
             return
         await self.set_spreadsheet_data(worksheet=name)
         self.wb_bot = None

@@ -1,6 +1,7 @@
 import requests
 import traceback
 import config
+import types
 
 
 TG_KEY = config.telegram_apikey
@@ -10,6 +11,29 @@ ID_LOGS = config.telegram_user_id
 name = "Testing Bubilda" if config.testing else "Bubilda"
 
 
+class LogAllErrors:
+    def __init__(self, additional_text: str = "", except_errors: types.UnionType | Exception = None):
+        self.additional_text = additional_text
+        self.except_errors: types.UnionType | Exception = except_errors
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type: type, exc_value: Exception, tb: traceback):
+        if exc_type is not None:
+            if self.except_errors is not None:
+                if isinstance(self.except_errors, types.UnionType):
+                    if exc_type in self.except_errors.__args__:
+                        return True
+                elif issubclass(self.except_errors, Exception):
+                    if exc_type is self.except_errors:
+                        return True
+            err(exc_value, self.additional_text)
+            return True
+        else:
+            return True
+
+
 def escape_markdown(text):
     escape_chars = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
     for char in escape_chars:
@@ -17,7 +41,7 @@ def escape_markdown(text):
     return text
 
 
-def log(text, markdown: bool = True):
+def log(text, markdown: bool = True) -> None:
     url = f"https://api.telegram.org/bot{TG_KEY}/sendMessage"
     text = f"From {name}:\n\n"+str(text)
     text = escape_markdown(text)
