@@ -86,8 +86,13 @@ class BotManagerCog(commands.Cog):
             return
 
         bot_path = os.path.join(self.bots_folder, bot_name, "main.py")
-        venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts",
-                                 "python.exe" if os.name == 'nt' else "bin/python")
+        if os.name == "posix":
+            venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts", "bin", "python")
+        elif os.name == 'nt':
+            venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts", "python.exe")
+        else:
+            await ctx.send(f"Неподдерживаемая операционная система: {os.name}")
+            return
         if not os.path.exists(venv_path):
             await ctx.send(f"Виртуальное окружение для бота `{bot_name}` по пути `{venv_path}` не найдено! Используется python по умолчанию.")
             venv_path = "python"
