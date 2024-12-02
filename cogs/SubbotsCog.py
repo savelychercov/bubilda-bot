@@ -85,7 +85,6 @@ class BotManagerCog(commands.Cog):
             await ctx.send("Нельзя <:funnycat:1051348714423328778>")
             return
 
-        bot_path = os.path.join(self.bots_folder, bot_name, "main.py")
         bot_dir = os.path.join(self.bots_folder, bot_name)
         if os.name == "posix":
             # venv_path = os.path.join(self.bots_folder, bot_name, "venv", "bin", "python")
@@ -100,7 +99,7 @@ class BotManagerCog(commands.Cog):
             await ctx.send(f"Виртуальное окружение для бота `{bot_name}` по пути `{venv_path}` не найдено! Используется python по умолчанию.")
             venv_path = "python"
 
-        if not os.path.exists(bot_path):
+        if not os.path.exists(os.path.join(bot_dir, "main.py")):
             await ctx.send(f"Бот `{bot_name}` не найден!")
             return
 
@@ -112,7 +111,7 @@ class BotManagerCog(commands.Cog):
             await ctx.send(f"Запускаю бота `{bot_name}`...")
             # Запуск бота с использованием интерпретатора из его виртуального окружения
             process = subprocess.Popen(
-                [venv_path, bot_path],  # Используем python из виртуального окружения
+                [venv_path, "main.py"],  # Используем python из виртуального окружения
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 bufsize=1,
