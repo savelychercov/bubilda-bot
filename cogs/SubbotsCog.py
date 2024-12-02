@@ -89,7 +89,7 @@ class BotManagerCog(commands.Cog):
         venv_path = os.path.join(self.bots_folder, bot_name, "venv", "Scripts",
                                  "python.exe" if os.name == 'nt' else "bin/python")
         if not os.path.exists(venv_path):
-            await ctx.send(f"Виртуальное окружение для бота `{bot_name}` не найдено! Используется python по умолчанию.")
+            await ctx.send(f"Виртуальное окружение для бота `{bot_name}` по пути `{venv_path}` не найдено! Используется python по умолчанию.")
             venv_path = "python"
 
         if not os.path.exists(bot_path):
@@ -100,10 +100,8 @@ class BotManagerCog(commands.Cog):
             await ctx.send(f"Бот `{bot_name}` уже запущен!")
             return
 
-
-
-
         try:
+            await ctx.send(f"Запускаю бота `{bot_name}`...")
             # Запуск бота с использованием интерпретатора из его виртуального окружения
             process = subprocess.Popen(
                 [venv_path, bot_path],  # Используем python из виртуального окружения
