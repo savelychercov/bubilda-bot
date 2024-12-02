@@ -86,6 +86,7 @@ class BotManagerCog(commands.Cog):
             return
 
         bot_path = os.path.join(self.bots_folder, bot_name, "main.py")
+        bot_dir = os.path.dirname(bot_path)
         if os.name == "posix":
             venv_path = os.path.join(self.bots_folder, bot_name, "venv", "bin", "python")
         elif os.name == 'nt':
@@ -115,7 +116,8 @@ class BotManagerCog(commands.Cog):
                 bufsize=1,
                 universal_newlines=True,
                 encoding="utf-8",
-                text=True
+                text=True,
+                cwd=bot_dir
             )
             self.running_bots[bot_name] = process
             await ctx.send(f"Бот `{bot_name}` успешно запущен!")
