@@ -56,7 +56,7 @@ def log(text, markdown: bool = True) -> None:
     print(text)
     resp = requests.post(url, params=params)
     if resp.status_code != 200:
-        raise Exception(f"Error sending message to Telegram: {resp.status_code} {resp.text}")
+        raise Exception(f"Error sending message to Telegram:\n{resp.status_code} {resp.text}")
 
 
 def err(error: Exception, additional_text: str = ""):
