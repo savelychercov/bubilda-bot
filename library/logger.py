@@ -1,3 +1,4 @@
+import httpx
 import requests
 import traceback
 import config
@@ -41,6 +42,12 @@ def escape_markdown(text):
     return text
 
 
+def slice_text(text: str, length: int = 1990) -> list[str]:
+    if not text:
+        return [""]
+    return [text[i:i + length] for i in range(0, len(text), length)]
+
+
 def log(text, markdown: bool = True) -> None:
     url = f"https://api.telegram.org/bot{TG_KEY}/sendMessage"
     text = f"From {name}:\n\n"+str(text)
@@ -48,17 +55,20 @@ def log(text, markdown: bool = True) -> None:
     if ID_LOGS is None:
         print("\n\nThis message was not sent to Telegram because the ID_LOGS is not set in the .env file")
         return
-    params = {
-        "chat_id": ID_LOGS,
-        "text": text,
-    }
-    if markdown: params["parse_mode"] = "MarkdownV2"
-    print(text)
-    resp = requests.post(url, params=params)
-    if resp.status_code != 200:
-        with open("log.txt", "a") as f:
-            f.write(f"{resp.status_code}: {resp.text}\n\n{text}\n\n")
-        # raise Exception(f"Error sending message to Telegram:\n{resp.status_code} {resp.text}")
+
+    for text_part in slice_text(text):
+        params = {
+            "chat_id": ID_LOGS,
+            "text": text_part,
+        }
+        if markdown: params["parse_mode"] = "MarkdownV2"
+        print(text_part)
+        resp = requests.post(url, params=params)
+
+        if resp.status_code != 200:
+            with open("log.txt", "a") as f:
+                f.write(f"{resp.status_code}: {resp.text}\n\n{text_part}\n\n")
+            # raise Exception(f"Error sending message to Telegram:\n{resp.status_code} {resp.text}")
 
 
 def err(error: Exception, additional_text: str = ""):
@@ -69,3 +79,7 @@ def err(error: Exception, additional_text: str = ""):
 ```"""
     log(text)
     config.last_traceback = traceback_str
+
+
+if __name__ == "__main__":
+    log("test"*1000)

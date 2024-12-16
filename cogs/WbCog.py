@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import config
 import httpx
 import time
+import asyncio
 
 
 def slice_text(text: str, length: int = 1990) -> list[str]:
@@ -27,7 +28,7 @@ class WbCog(commands.Cog):
         self.event_task = None
         self.wb_bot = None
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=10)
     async def try_update_table(self):
         try:
             print(f"Checking for updates... {datetime.now()}")
@@ -36,7 +37,7 @@ class WbCog(commands.Cog):
             if current_date == data["last_update"]:
                 print("No updates")
                 return
-    
+
             last_update_date = datetime.strptime(data["last_update"], "%Y-%m-%d")
             current_datetime = datetime.strptime(current_date, "%Y-%m-%d")
     
@@ -67,14 +68,12 @@ class WbCog(commands.Cog):
                     log(f"Date not found in table: {date}")
                 except httpx.ReadTimeout:
                     log(f"Cannot fetch data for date: {date}")
-                    self.restart_task()
-    
+
                 await self.set_spreadsheet_data(last_update=date)
 
                 log(f"Updated {date} in {wb_bot.spreadsheet.url} ({time.time() - start_time:.2f} sec)")
         except Exception as e:
             err(e, "Error in try_update_table")
-            self.restart_task()
 
     def cog_load(self):
         if config.testing: return
@@ -83,11 +82,15 @@ class WbCog(commands.Cog):
     def cog_unload(self):
         if self.event_task:
             self.event_task.cancel()
+            self.event_task = None
 
-    def restart_task(self):
-        if self.event_task:
-            self.event_task.cancel()
+    @try_update_table.after_loop
+    async def restart_task(self):
+        if self.try_update_table.failed():
+            log("Task \'try_update_table\' failed, restarting...")
             self.event_task = self.try_update_table.start()
+        else:
+            log("Task \'try_update_table\' stopped")
 
     @staticmethod
     async def get_spreadsheet_data() -> dict[str, str]:
