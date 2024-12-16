@@ -7,6 +7,7 @@ from discord import Attachment
 from discord.ext import commands
 from library.graphics import SearchContent
 from library import logger
+import asyncio
 
 if openai_apikey is not None:
     client = openai.OpenAI(api_key=openai_apikey)
@@ -132,13 +133,15 @@ def send_table(table_name: str, titles: list[str], rows: list[list[str]]):
     return response.choices[0].message.content"""
 
 
-def gen_answer_universal(full_context: list[dict]):
-    completion = client.chat.completions.create(
+async def gen_answer_universal(full_context: list[dict]):
+    completion = await asyncio.to_thread(
+        client.chat.completions.create,
         model=model,
         temperature=temperature,
         messages=full_context,
         functions=functions
     )
+
     text = completion.choices[0].message.content
     gif_url = None
     embed = None
@@ -285,6 +288,7 @@ async def get_last_messages(
     async for msg in channel.history(limit=count):
         messages_count += 1
         urls = None
+        role = "user"
         if (msg == request_message
                 or msg.content.strip() == ""
                 or re.match(regex_for_urls, msg.content)):  # no content in message text
@@ -299,13 +303,12 @@ async def get_last_messages(
         else:
             content = msg.content
         if msg.author.id == bot.user.id:
-            name = "assistant"
-        else:
-            name = refine_name(msg.author.name)
+            role = "assistant"
+        name = refine_name(msg.author.name)
         if messages_count < image_remember_limit:
             urls = get_urls_from_attachments(msg.attachments)
 
-        messages.insert(0, pack_message(name, content, urls, role="user"))
+        messages.insert(0, pack_message(name, content, urls, role=role))
     return messages
 
 

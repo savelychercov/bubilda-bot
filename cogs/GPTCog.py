@@ -93,7 +93,7 @@ class GPTCog(commands.Cog):
                     last_messages = await gpt.get_last_messages(self.bot, message.channel, message,
                                                                 preferences.context_window)
                     messages_context = gpt.get_full_context_window(preferences.tune_string, last_messages, message)
-                    answer_text, gif_url, embed = gpt.gen_answer_universal(messages_context)
+                    answer_text, gif_url, embed = await gpt.gen_answer_universal(messages_context)
                     if not any((answer_text, gif_url, embed)):
                         answer_text = "Я не смог ничего придумать"
 
@@ -127,7 +127,7 @@ class GPTCog(commands.Cog):
 
             await message.channel.send(answer_text)
 
-    """@commands.command(brief="Вывести последние сообщения (dev)")
+    @commands.command(brief="Вывести последние сообщения (dev)")
     async def lastmessages(self, ctx: commands.Context):
         preferences = get_settings(ctx.guild.id)
         last_messages = await gpt.get_last_messages(self.bot, ctx.channel, ctx.message, preferences.context_window)
@@ -136,7 +136,7 @@ class GPTCog(commands.Cog):
         with open("last_messages.txt", "w", encoding="utf-8") as f:
             for message in messages_strs:
                 f.write(message + "\n")
-        await ctx.send(file=discord.File("last_messages.txt"))"""
+        await ctx.send(file=discord.File("last_messages.txt"))
 
     """@commands.command(brief="Ответ от GPT", aliases=["gpt", "ans"])
     async def answer(self, ctx: commands.Context, *, arg=None):

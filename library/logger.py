@@ -88,6 +88,12 @@ def log(text, markdown: bool = True) -> None:
         if resp.status_code != 200:
             with open("log.txt", "a") as f:
                 f.write(f"{resp.status_code}: {resp.text}\n\n{text_part}\n\n")
+
+            params = {
+                "chat_id": ID_LOGS,
+                "text": f"Error sending message to Telegram:\n{resp.status_code} {resp.text}\nLog saved to log.txt",
+            }
+            requests.post(url, params=params)
             # raise Exception(f"Error sending message to Telegram:\n{resp.status_code} {resp.text}")
 
 
