@@ -3,6 +3,7 @@ import requests
 import traceback
 import config
 import types
+import re
 
 
 TG_KEY = config.telegram_apikey
@@ -45,7 +46,26 @@ def escape_markdown(text):
 def slice_text(text: str, length: int = 1990) -> list[str]:
     if not text:
         return [""]
-    return [text[i:i + length] for i in range(0, len(text), length)]
+
+    if len(text) <= length:
+        return [text]
+
+    # Разбиваем текст на блоки Markdown и на обычный текст
+    blocks = re.split(r'(```.*?```)', text, flags=re.DOTALL)
+
+    result = []
+    for block in blocks:
+        if block.startswith("```") and block.endswith("```"):  # Это Markdown блок
+            content = block[3:-3]  # Убираем ```
+
+            # Разбиваем содержимое Markdown блока на части
+            slices = [f"```{content[i:i + length]}```" for i in range(0, len(content), length)]
+            result.extend(slices)
+        else:
+            # Разбиваем обычный текст на части
+            result.extend([block[i:i + length] for i in range(0, len(block), length)])
+
+    return result
 
 
 def log(text, markdown: bool = True) -> None:
@@ -74,12 +94,6 @@ def log(text, markdown: bool = True) -> None:
 def err(error: Exception, additional_text: str = ""):
     traceback_str = ''.join(
         traceback.format_exception(type(error), error, error.__traceback__))
-    text = f"""{additional_text}\n```python
-{traceback_str}
-```"""
+    text = f"""{additional_text}\n```python{traceback_str}```"""
     log(text)
     config.last_traceback = traceback_str
-
-
-if __name__ == "__main__":
-    log("test"*1000)
