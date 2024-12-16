@@ -11,17 +11,6 @@ import time
 import asyncio
 
 
-def slice_text(text: str, length: int = 1990) -> list[str]:
-    if not text:
-        return [""]
-    return [text[i:i + length] for i in range(0, len(text), length)]
-
-
-async def send_long(ctx: commands.Context, text: str):
-    for t in slice_text(text):
-        await ctx.send(t)
-
-
 class WbCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

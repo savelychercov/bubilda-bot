@@ -452,11 +452,9 @@ class SheetsBot:
         table_nomenclatures = await self.extract_nomenclatures()
         print(f"Founded {len(table_nomenclatures)} nomenclatures in table.")
 
-        # Форматируем дату
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         formatted_date = f"{date_obj.day} {MONTHS[date_obj.strftime('%B')]}"
 
-        # Поиск столбца с датой
         header_row = table_data[0]
         try:
             print(f"Searching data column for {date}...")
