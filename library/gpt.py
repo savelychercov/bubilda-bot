@@ -324,13 +324,3 @@ def get_function_call(resp: openai.ChatCompletion) -> str:
         return resp.choices[0].message.function_call.name
     else:
         return None
-
-
-if __name__ == "__main__":
-    test_embed = discord.Embed(
-        title="Test title",
-        description="Test desc",
-        color=discord.Color.orange()
-    )
-    print(refine_embed(test_embed))
-    print(eval(refine_embed(test_embed)))

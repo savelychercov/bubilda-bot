@@ -513,20 +513,92 @@ async def main():
     with open("spreadsheet_data.json", "r", encoding="utf-8") as f:
         sheet_data = json.load(f)
     t = sheet_data["wb_token"]
-    url = sheet_data["spreadsheet_url"]
-    worksheet = sheet_data["worksheet"]
-    try:
-        bot = SheetsBot(t, url, worksheet, "gspread_credentials.json")
-    except gspread.exceptions.WorksheetNotFound:
-        print("Worksheet not found")
-        return
-    start = time.time()
-    date = "2024-11-24"
-    data = await bot.get_fullstats(date)
-    print(f"Fetched data in: {round(time.time() - start, 2)}s")
-    start = time.time()
-    await bot.update_table_with_data(date, data)
-    print(f"Updated in: {round(time.time() - start, 2)}s")
+
+    headers = {
+        "Authorization": t,
+        "Content-Type": "application/json"
+    }
+
+    cursor = {
+        "limit": 100
+    }
+
+    nomenclatures = []
+
+    while True:
+        print("Getting nomenclatures...")
+        payload = {
+            "settings": {
+                "cursor": cursor,
+                "filter": {
+                    "withPhoto": -1
+                }
+            }
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url_nomenclatures, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        for i in range(len(data.get('cards', []))):
+            nomenclatures.append(Nomenclature(data['cards'][i]))
+
+        total = data["cursor"]["total"]
+        if total < cursor['limit']:
+            break
+
+        cursor['updatedAt'] = data['cursor']['updatedAt']
+        cursor['nmID'] = data['cursor']['nmID']
+
+    nms = [nm.id for nm in nomenclatures]  # list of nomenclature ids
+
+    headers = {
+        "Authorization": t,
+        "Content-Type": "application/json"
+    }
+    params = {"dateFrom": "2017-03-25T00:00:00"}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url_stocks, headers=headers, params=params, timeout=30)
+
+    with open("temp_stocks.json", "w", encoding="utf-8") as f:
+        json.dump(response.json(), f, indent=4, ensure_ascii=False)
+
+    response.raise_for_status()
+
+    KEYS = {
+        "quantity": "sum",
+        "Price": "one",
+        "Discount": "one",
+        "inWayToClient": "sum",
+        "inWayFromClient": "sum",
+        "quantityFull": "sum",
+    }
+
+    stocks = {}
+    for stock in response.json():
+        if stock["nmId"] not in stocks:
+            stocks[stock["nmId"]] = {k: stock[k] for k in KEYS}
+        else:
+            for k in KEYS:
+                if KEYS[k] == "sum":
+                    stocks[stock["nmId"]][k] += stock[k]
+
+    for nm in nms:
+        if nm not in stocks:
+            stocks[nm] = {k: None for k in KEYS}
+
+    with open("temp_counted_stocks.json", "w", encoding="utf-8") as f:
+        json.dump(stocks, f, indent=4, ensure_ascii=False)
+
+    """with open("temp_stocks.json", "r", encoding="utf-8") as f:
+        stocks = json.load(f)
+
+    for stock in stocks:
+        nmid = 267706059
+        if stock["nmId"] == nmid:
+            print(json.dumps(stock, indent=4, ensure_ascii=False))"""
+
 
 if __name__ == "__main__":
     asyncio.run(main())
