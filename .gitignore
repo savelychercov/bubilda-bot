@@ -5,6 +5,7 @@ __pycache__/
 
 .idea/
 other/
+meme.png
 
 /memoryV1/*
 !/memoryV1/files_db.py

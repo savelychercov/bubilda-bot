@@ -3,9 +3,10 @@ from discord.ext import commands
 from discord import app_commands
 import random
 import transliterate
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, ImageDraw, ImageFont
 from memoryV2.DB import check_path, files_path
 import io
+from typing import Literal
 
 import config
 from library.other_tools import get_discord_color, T_COLOR, repair_png
@@ -51,6 +52,15 @@ regional_indicator_emojis = {
     '8': '8️⃣',
     '9': '9️⃣'
 }
+
+
+COLOR_NAME = Literal[
+    "white", "black", "red", "green", "blue",
+    "yellow", "cyan", "magenta", "gray", "grey",
+    "darkred", "darkgreen", "darkblue",
+    "lightred", "lightgreen", "lightblue",
+    "orange", "purple", "pink", "brown"
+]
 
 
 class OtherCog(commands.Cog):
@@ -203,6 +213,50 @@ class OtherCog(commands.Cog):
                 await ctx.message.add_reaction("<:poker_question:1225039226593345576>")
                 return
         await ctx.message.add_reaction("✅")
+
+    @app_commands.command(name="meme", description="Создать мем")
+    @app_commands.rename(
+        picture="картинка",
+        text="подпись",
+        text_color="цвет-подписи",
+        side="сторона-подписи",
+        font_size="размер-шрифта"
+    )
+    @app_commands.describe(
+        picture="Собственно картинка мема",
+        text="Текст подписи мема (Текст)",
+        text_color="Цвет подписи (white)",
+        side="Где будет подпись (bottom)",
+        font_size="Размер шрифта (100)"
+    )
+    async def create_meme(
+            self,
+            interaction: discord.Interaction,
+            picture: discord.Attachment = None,
+            text: str = "Текст",
+            text_color: COLOR_NAME = "white",
+            side: Literal["top", "bottom"] = "bottom",
+            font_size: int = 100
+    ):
+        response: discord.InteractionResponse = interaction.response
+        await response.defer()
+
+        image = await picture.read()
+        image = Image.open(io.BytesIO(image))
+
+        if side == "top":
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.truetype("library/Lobster-Regular.ttf", font_size)
+            draw.text((image.width / 2, 10), fill=text_color, align="center", anchor="mt", text=text, font=font)
+        else:
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.truetype("library/Lobster-Regular.ttf", font_size)
+            draw.text((image.width / 2, image.height-10), fill=text_color, align="center", anchor="mb", text=text, font=font)
+
+        meme_file_path = "meme.png"
+        image.save(meme_file_path)
+
+        await interaction.followup.send("Мем создан!", file=discord.File(meme_file_path))
 
 
 async def setup(bot):
